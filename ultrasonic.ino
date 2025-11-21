@@ -1,40 +1,138 @@
+// -------------------------------
+// Ultrasonic Sensor Pins
+// -------------------------------
+const int trigPin = 44;
+const int echoPin = 46;
 
-Diego Olivar-Rodriguez <dolivarr@terpmail.umd.edu>
-10:16 AM (1 hour ago)
-to me
+// -------------------------------
+// Motor Pins (your setup)
+// -------------------------------
 
-const int trigPin = 10;
-const int echoPin = 11;
+// Back Right wheel
+int ENA = 3;
+int In1 = 4;
+int In2 = 5;
 
+// Front Right wheel
+int ENB = 6;
+int In3 = 7;
+int In4 = 8;
+
+// Front Left wheel
+int ENC = 22;
+int In5 = 24;
+int In6 = 26;
+
+// Back Left wheel
+int END = 28;
+int In7 = 32;
+int In8 = 30;
+
+int SPEED = 210;
+
+// -------------------------------
+// Setup
+// -------------------------------
 void setup() {
   Serial.begin(9600);
+
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
-  
-  // Ensure trigger pin is low
   digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
 
+  pinMode(In1, OUTPUT);
+  pinMode(In2, OUTPUT);
+  pinMode(ENA, OUTPUT);
+  pinMode(In3, OUTPUT);
+  pinMode(In4, OUTPUT);
+  pinMode(ENB, OUTPUT);
+  pinMode(In5, OUTPUT);
+  pinMode(In6, OUTPUT);
+  pinMode(ENC, OUTPUT);
+  pinMode(In7, OUTPUT);
+  pinMode(In8, OUTPUT);
+  pinMode(END, OUTPUT);
 }
 
-void loop() {
-
-
-  // Send a 10 microsecond high pulse to trigger the sensor
+// -------------------------------
+// Distance Function
+// -------------------------------
+int getDistance() {
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
   digitalWrite(trigPin, HIGH);
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
 
-  // Read the echo pin, which returns the duration of the pulse in microseconds
-  long duration = pulseIn(echoPin, HIGH);
+  long duration = pulseIn(echoPin, HIGH, 25000);
+  if (duration == 0) return 999;
 
-  // Calculate distance in centimetres
-  int distance = duration * 0.034 / 2;
+  return duration * 0.034 / 2;
+}
 
-  // Print the distance in cm
+// -------------------------------
+// Motor Movement Functions
+// -------------------------------
+void moveForward() {
+  // All wheels forward
+  digitalWrite(In1, HIGH);
+  digitalWrite(In2, LOW);
+  analogWrite(ENA, SPEED);
+  digitalWrite(In3, HIGH);
+  digitalWrite(In4, LOW);
+  analogWrite(ENB, SPEED);
+  digitalWrite(In5, HIGH);
+  digitalWrite(In6, LOW);
+  analogWrite(ENC, SPEED);
+  digitalWrite(In7, HIGH);
+  digitalWrite(In8, LOW);
+  analogWrite(END, SPEED);
+}
+
+void strafeRight() {
+  // Left wheels forward
+  digitalWrite(In5, HIGH);
+  digitalWrite(In6, LOW);  // Front Left
+  analogWrite(ENC, SPEED);
+
+  digitalWrite(In7, LOW);
+  digitalWrite(In8, HIGH);  // Back Left
+  analogWrite(END, SPEED);
+
+  // Right wheels backward
+  digitalWrite(In3, LOW);
+  digitalWrite(In4, HIGH);  // Front Right
+  analogWrite(ENB, SPEED);
+
+  digitalWrite(In1, HIGH);
+  digitalWrite(In2, LOW);  // Back Right
+  analogWrite(ENA, SPEED);
+}
+
+void stopAll() {
+  analogWrite(ENA, 0);
+  analogWrite(ENB, 0);
+  analogWrite(ENC, 0);
+  analogWrite(END, 0);
+}
+
+// -------------------------------
+// Main Loop
+// -------------------------------
+void loop() {
+  int distance = getDistance();
+
   Serial.print("Distance: ");
   Serial.print(distance);
   Serial.println(" cm");
 
-  delay(500); // Half-second delay between measurements
+  if (distance <= 10) {
+    
+    Serial.println("STRAFE RIGHT");
+    strafeRight();
+  } else {
+    moveForward();
+  }
+
+  delay(80);
 }
